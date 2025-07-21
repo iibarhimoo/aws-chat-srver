@@ -28,7 +28,7 @@ public class ChatPanel extends JPanel {
             emojiButton.addActionListener(e -> inputField.setText(inputField.getText() + emoji));
             emojiPanel.add(emojiButton);
         }
-        add(emojiPanel, BorderLayout.NORTH);  // Fixed: Changed frame.add to add
+        add(emojiPanel, BorderLayout.NORTH);
 
         // Input Panel
         JPanel inputPanel = new JPanel(new BorderLayout());
@@ -56,7 +56,7 @@ public class ChatPanel extends JPanel {
     private void sendMessage(MessageSender sender) {
         String text = inputField.getText();
         if (!text.isEmpty()) {
-            sender.send("[" + getTimestamp() + "] " + text);  // Moved timestamp here
+            sender.send("[" + getTimestamp() + "] " + text);
             inputField.setText("");
         }
     }
