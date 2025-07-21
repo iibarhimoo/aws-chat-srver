@@ -2,6 +2,8 @@ package com.chat.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class ChatPanel extends JPanel {
     @FunctionalInterface
@@ -16,11 +18,14 @@ public class ChatPanel extends JPanel {
     public ChatPanel(MessageSender messageSender) {
         setLayout(new BorderLayout());
 
-        chatArea = new JTextArea();
+        // Chat display area
+        chatArea = new JTextArea(20, 40);
         chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+        chatArea.setWrapStyleWord(true);
         add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-        // Emoji Panel
+        // Emoji panel
         JPanel emojiPanel = new JPanel(new FlowLayout());
         String[] emojis = {"😀", "😂", "❤️", "👍"};
         for (String emoji : emojis) {
@@ -30,17 +35,17 @@ public class ChatPanel extends JPanel {
         }
         add(emojiPanel, BorderLayout.NORTH);
 
-        // Input Panel
+        // Input panel
         JPanel inputPanel = new JPanel(new BorderLayout());
-        inputField = new JTextField();
+        inputField = new JTextField(40);
         inputField.addActionListener(e -> sendMessage(messageSender));
-
+        
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(new JButton("Send") {{
             addActionListener(e -> sendMessage(messageSender));
         }}, BorderLayout.EAST);
 
-        // User List
+        // User list
         userList = new JComboBox<>();
         userList.addActionListener(e -> {
             if (userList.getSelectedIndex() > 0) {
@@ -56,20 +61,27 @@ public class ChatPanel extends JPanel {
     private void sendMessage(MessageSender sender) {
         String text = inputField.getText();
         if (!text.isEmpty()) {
-            sender.send("[" + getTimestamp() + "] " + text);
+            sender.send(formatMessage(text));
             inputField.setText("");
         }
     }
 
-    public void appendMessage(String message) {
-        chatArea.append(message + "\n");
-    }
-
-    public void updateUserList(String[] users) {
-        userList.setModel(new DefaultComboBoxModel<>(users));
+    private String formatMessage(String text) {
+        return "[" + getTimestamp() + "] " + text;
     }
 
     private String getTimestamp() {
-        return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+        return LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    public void appendMessage(String message) {
+        chatArea.append(message + "\n");
+        chatArea.setCaretPosition(chatArea.getDocument().getLength());
+    }
+
+    public void updateUserList(String[] users) {
+        SwingUtilities.invokeLater(() -> {
+            userList.setModel(new DefaultComboBoxModel<>(users));
+        });
     }
 }
