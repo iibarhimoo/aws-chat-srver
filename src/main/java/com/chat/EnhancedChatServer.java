@@ -9,11 +9,11 @@ public class EnhancedChatServer {
     private static Map<String, PrintWriter> clients = new HashMap<>();
     private static Map<String, String> userCredentials = Map.of(
         "Yahay", "networkProgramming",
-        "Ibrahim", "networkProgramming"
-        "Hasan", "networkProgramming"
-        "Faisal", "networkProgramming"
-        "Safwan", "networkProgramming"
-        "Nouruldeen", "networkProgramming"
+        "Ibrahim", "networkProgramming",
+        "Hasan", "networkProgramming",
+        "Faisal", "networkProgramming",
+        "Safwan", "networkProgramming",
+        "Nouruldeen", "networkProgramming",
         "Saud", "networkProgramming"
     );
     private static Map<String, Set<PrintWriter>> rooms = new HashMap<>();
@@ -47,24 +47,21 @@ public class EnhancedChatServer {
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
 
-                // Authentication
-                while (true) {
+                // Authentication loop
+                boolean authenticated = false;
+                while (!authenticated) {
                     out.println("SUBMIT_USERNAME");
                     username = in.readLine();
                     out.println("SUBMIT_PASSWORD");
                     String password = in.readLine();
 
-                    if (userCredentials.getOrDefault(username, "").equals(password)) {
+                    if (userCredentials.containsKey(username) && 
+                        userCredentials.get(username).equals(password)) {
                         out.println("AUTH_SUCCESS");
-                        break;
+                        authenticated = true;
                     } else {
-                        while(false){
                         out.println("AUTH_FAIL");
-                        return;
-                        if(userCredentials.getOrDefault(username, "").equals(password)){
-                            ou.println("AUTH_SUCCESS");
-                            break;
-                        
+                        out.println("Invalid credentials. Please try again.");
                     }
                 }
 
