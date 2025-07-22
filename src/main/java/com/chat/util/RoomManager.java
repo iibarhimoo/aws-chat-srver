@@ -9,8 +9,8 @@ public class RoomManager {
 
     static {
         rooms.put("General", new HashSet<>());
-        rooms.put("Sports", new HashSet<>());
-        rooms.put("Gaming", new HashSet<>());
+        rooms.put("Group(4)", new HashSet<>());
+        rooms.put("NetworkProgramming", new HashSet<>());
     }
 
     public static synchronized void joinRoom(User user, String roomName) {
