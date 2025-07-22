@@ -19,9 +19,10 @@ public class EnhancedChatServer {
     private static Map<String, Set<PrintWriter>> rooms = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
-        rooms.put("General", new HashSet<>());
-        rooms.put("Group(4)", new HashSet<>());
-        rooms.put("NetworkProgramming", new HashSet<>());
+        // Initialize rooms
+        createRoom("General");
+        createRoom("Group(4)");
+        createRoom("NetworkProgramming");
         
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Chat Server running on port " + PORT);
@@ -29,6 +30,16 @@ public class EnhancedChatServer {
                 new ClientHandler(serverSocket.accept()).start();
             }
         }
+    }
+
+    private static synchronized void createRoom(String roomName) {
+        rooms.putIfAbsent(roomName, new HashSet<>());
+        broadcastRoomList();
+    }
+
+    private static synchronized void broadcastRoomList() {
+        String roomList = "ROOM_LIST:" + String.join(",", rooms.keySet());
+        clients.values().forEach(writer -> writer.println(roomList));
     }
 
     private static class ClientHandler extends Thread {
@@ -47,69 +58,108 @@ public class EnhancedChatServer {
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
 
-                // Authentication loop
-                boolean authenticated = false;
-                while (!authenticated) {
-                    out.println("SUBMIT_USERNAME");
-                    username = in.readLine();
-                    out.println("SUBMIT_PASSWORD");
-                    String password = in.readLine();
-
-                    if (userCredentials.containsKey(username) && 
-                        userCredentials.get(username).equals(password)) {
-                        out.println("AUTH_SUCCESS");
-                        authenticated = true;
-                    } else {
-                        out.println("AUTH_FAIL");
-                        out.println("Invalid credentials. Please try again.");
-                    }
+                // Authentication
+                if (!authenticate()) {
+                    socket.close();
+                    return;
                 }
 
                 synchronized (clients) {
                     clients.put(username, out);
                 }
-                joinRoom(currentRoom);
 
+                // Send initial data
+                sendRoomList(out);
+                joinRoom(currentRoom);
                 broadcastSystemMessage(username + " joined " + currentRoom);
 
+                // Message handling
                 String input;
                 while ((input = in.readLine()) != null) {
                     if (input.startsWith("/join ")) {
-                        String newRoom = input.substring(6);
-                        leaveRoom(currentRoom);
-                        joinRoom(newRoom);
-                        currentRoom = newRoom;
-                    } else if (input.startsWith("/pm ")) {
-                        String[] parts = input.split(" ", 3);
-                        if (parts.length == 3) {
-                            sendPrivateMessage(username, parts[1], parts[2]);
-                        }
-                    } else {
+                        handleRoomChange(input.substring(6));
+                    } 
+                    else if (input.startsWith("/create ")) {
+                        handleRoomCreation(input.substring(8));
+                    }
+                    else if (input.startsWith("/pm ")) {
+                        handlePrivateMessage(input);
+                    }
+                    else {
                         broadcastRoomMessage(currentRoom, username + ": " + input);
                     }
                 }
             } catch (IOException e) {
                 System.out.println(username + " disconnected: " + e.getMessage());
             } finally {
-                if (username != null) {
-                    leaveRoom(currentRoom);
-                    clients.remove(username);
-                    broadcastSystemMessage(username + " left the server");
+                disconnectClient();
+            }
+        }
+
+        private boolean authenticate() throws IOException {
+            int attempts = 0;
+            while (attempts < 3) {
+                out.println("SUBMIT_USERNAME");
+                username = in.readLine();
+                out.println("SUBMIT_PASSWORD");
+                String password = in.readLine();
+
+                if (userCredentials.getOrDefault(username, "").equals(password)) {
+                    out.println("AUTH_SUCCESS");
+                    return true;
                 }
-                try { socket.close(); } catch (IOException e) {}
+                out.println("AUTH_FAIL");
+                attempts++;
+            }
+            return false;
+        }
+
+        private void handleRoomChange(String roomName) {
+            if (rooms.containsKey(roomName)) {
+                leaveRoom(currentRoom);
+                joinRoom(roomName);
+                currentRoom = roomName;
+            } else {
+                out.println("SERVER: Room doesn't exist");
+            }
+        }
+
+        private void handleRoomCreation(String roomName) {
+            if (!rooms.containsKey(roomName)) {
+                createRoom(roomName);
+                out.println("SERVER: Created room " + roomName);
+            } else {
+                out.println("SERVER: Room already exists");
+            }
+        }
+
+        private void handlePrivateMessage(String input) {
+            String[] parts = input.split(" ", 3);
+            if (parts.length == 3) {
+                sendPrivateMessage(username, parts[1], parts[2]);
             }
         }
 
         private void joinRoom(String room) {
-            rooms.computeIfAbsent(room, k -> new HashSet<>()).add(out);
+            rooms.get(room).add(out);
             out.println("SERVER: Joined " + room);
+            broadcastRoomMessage(room, "SERVER: " + username + " joined the room");
         }
 
         private void leaveRoom(String room) {
             if (rooms.containsKey(room)) {
                 rooms.get(room).remove(out);
-                broadcastRoomMessage(room, "SERVER: " + username + " left");
+                broadcastRoomMessage(room, "SERVER: " + username + " left the room");
             }
+        }
+
+        private void disconnectClient() {
+            if (username != null) {
+                leaveRoom(currentRoom);
+                clients.remove(username);
+                broadcastSystemMessage(username + " left the server");
+            }
+            try { socket.close(); } catch (IOException e) {}
         }
     }
 
@@ -131,5 +181,9 @@ public class EnhancedChatServer {
 
     private static void broadcastSystemMessage(String message) {
         clients.values().forEach(writer -> writer.println("SERVER: " + message));
+    }
+
+    private static void sendRoomList(PrintWriter writer) {
+        writer.println("ROOM_LIST:" + String.join(",", rooms.keySet()));
     }
 }
