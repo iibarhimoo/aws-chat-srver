@@ -1,4 +1,4 @@
-package com.chat;
+package com.chat.gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -6,87 +6,145 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 
-public class EnhancedChatClient {
-    private JFrame frame = new JFrame("Chat");
-    private JTextArea chatArea = new JTextArea(20, 40);
-    private JTextField inputField = new JTextField(40);
-    private JComboBox<String> roomSelector = new JComboBox<>(new String[]{"General", "Group(4)","NetworkProgramming"});
+public class EnhancedChatClient extends JFrame {
+    private JTextArea chatArea;
+    private JTextField inputField;
+    private JComboBox<String> userList;
     private PrintWriter out;
     private String username;
 
-    public EnhancedChatClient(String serverIp) {
+    public EnhancedChatClient() {
         initializeGUI();
-        connectToServer(serverIp);
+        connectToServer();
     }
 
     private void initializeGUI() {
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
+        setTitle("Enhanced Chat Client");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
+        // Chat display
+        chatArea = new JTextArea();
         chatArea.setEditable(false);
-        frame.add(new JScrollPane(chatArea), BorderLayout.CENTER);
+        add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-        JPanel inputPanel = new JPanel();
-        inputPanel.add(new JLabel("Room:"));
-        inputPanel.add(roomSelector);
-        inputPanel.add(inputField);
-        inputPanel.add(new JButton("Send") {{
-            addActionListener(e -> sendMessage());
-        }});
+        // Input panel
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputField = new JTextField();
+        inputField.addActionListener(e -> sendMessage());
+        inputPanel.add(inputField, BorderLayout.CENTER);
 
-        roomSelector.addActionListener(e -> {
-            out.println("/join " + roomSelector.getSelectedItem());
+        JButton sendButton = new JButton("Send");
+        sendButton.addActionListener(e -> sendMessage());
+        inputPanel.add(sendButton, BorderLayout.EAST);
+
+        // User list
+        userList = new JComboBox<>();
+        userList.addActionListener(e -> {
+            if (userList.getSelectedIndex() > 0) {
+                inputField.setText("/pm " + userList.getSelectedItem() + " ");
+                inputField.requestFocus();
+            }
         });
 
-        inputField.addActionListener(e -> sendMessage());
-        frame.add(inputPanel, BorderLayout.SOUTH);
-        frame.pack();
-        frame.setVisible(true);
+        add(inputPanel, BorderLayout.SOUTH);
+        add(userList, BorderLayout.EAST);
+        setVisible(true);
     }
 
-    private void connectToServer(String serverIp) {
-        try {
-            Socket socket = new Socket(serverIp, 8080);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    private void connectToServer() {
+        boolean connected = false;
+        int attemptsLeft = 3;
 
-            // Authentication
-            username = JOptionPane.showInputDialog(frame, "Username:");
-            String password = JOptionPane.showInputDialog(frame, "Password:");
-            out.println(username);
-            out.println(password);
+        while (!connected && attemptsLeft > 0) {
+            String serverIp = JOptionPane.showInputDialog(this, 
+                "Enter server IP (attempts left: " + attemptsLeft + "):", 
+                "localhost");
 
-            new Thread(() -> {
-                try {
-                    String line;
-                    while ((line = in.readLine()) != null) {
-                        String finalLine = line;
-                        SwingUtilities.invokeLater(() -> chatArea.append(finalLine + "\n"));
+            if (serverIp == null) {
+                System.exit(0);
+            }
+
+            try {
+                Socket socket = new Socket(serverIp, 8080);
+                out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                // Authentication loop
+                while (true) {
+                    String serverMsg = in.readLine();
+                    if (serverMsg.equals("SUBMIT_USERNAME")) {
+                        username = JOptionPane.showInputDialog(this, "Username:");
+                        out.println(username);
+                    } 
+                    else if (serverMsg.equals("SUBMIT_PASSWORD")) {
+                        JPasswordField passwordField = new JPasswordField();
+                        int option = JOptionPane.showConfirmDialog(this, 
+                            passwordField, "Password:", JOptionPane.OK_CANCEL_OPTION);
+                        
+                        if (option == JOptionPane.OK_OPTION) {
+                            out.println(new String(passwordField.getPassword()));
+                        } else {
+                            out.println(""); // Send empty password
+                        }
                     }
-                } catch (IOException e) {
-                    SwingUtilities.invokeLater(() -> 
-                        chatArea.append("Disconnected from server\n"));
+                    else if (serverMsg.equals("AUTH_SUCCESS")) {
+                        connected = true;
+                        startMessageListener(in);
+                        break;
+                    }
+                    else if (serverMsg.startsWith("AUTH_FAIL")) {
+                        attemptsLeft--;
+                        JOptionPane.showMessageDialog(this, 
+                            "Invalid credentials. Attempts left: " + attemptsLeft);
+                        break;
+                    }
                 }
-            }).start();
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(frame, "Connection failed: " + e.getMessage());
+
+                if (!connected && attemptsLeft == 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Maximum attempts reached. Exiting.");
+                    System.exit(0);
+                }
+
+            } catch (IOException e) {
+                attemptsLeft--;
+                JOptionPane.showMessageDialog(this, 
+                    "Connection failed: " + e.getMessage() + "\nAttempts left: " + attemptsLeft);
+            }
         }
+    }
+
+    private void startMessageListener(BufferedReader in) {
+        new Thread(() -> {
+            try {
+                String message;
+                while ((message = in.readLine()) != null) {
+                    String finalMessage = message;
+                    SwingUtilities.invokeLater(() -> {
+                        chatArea.append(finalMessage + "\n");
+                        chatArea.setCaretPosition(chatArea.getDocument().getLength());
+                    });
+                }
+            } catch (IOException e) {
+                SwingUtilities.invokeLater(() -> {
+                    chatArea.append("Disconnected from server\n");
+                    inputField.setEnabled(false);
+                });
+            }
+        }).start();
     }
 
     private void sendMessage() {
         String text = inputField.getText();
         if (!text.isEmpty()) {
-            if (text.startsWith("/pm ")) {
-                out.println(text);
-            } else {
-                out.println(text);
-            }
+            out.println(text);
             inputField.setText("");
         }
     }
 
     public static void main(String[] args) {
-        String serverIp = JOptionPane.showInputDialog("Enter server IP:", "");
-        SwingUtilities.invokeLater(() -> new EnhancedChatClient(serverIp));
+        SwingUtilities.invokeLater(() -> new EnhancedChatClient());
     }
 }
