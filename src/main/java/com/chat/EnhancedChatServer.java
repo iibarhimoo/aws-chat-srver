@@ -24,7 +24,7 @@ public class EnhancedChatServer {
         rooms.put("NetworkProgramming", new HashSet<>());
         
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Enhanced Chat Server running on port " + PORT);
+            System.out.println("Chat Server running on port " + PORT);
             while (true) {
                 new ClientHandler(serverSocket.accept()).start();
             }
