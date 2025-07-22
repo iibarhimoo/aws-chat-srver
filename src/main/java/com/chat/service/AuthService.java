@@ -10,7 +10,11 @@ public class AuthService {
         // Preloaded users (in production, use database)
         userDatabase.put("Yahya", "networkProgramming");
         userDatabase.put("Ibrahim", "networkProgramming");
-        userDatabase.put("Ammer" , "networkProgramming");
+        userDatabase.put("Hasan" , "networkProgramming");
+        userDatabase.put("Faisal" , "networkProgramming");
+        userDatabase.put("Safwan" , "networkProgramming");
+        userDatabase.put("Nouruladeen" , "networkProgramming");
+        userDatabase.put("Saud" , "networkProgramming");
     }
 
     public static boolean authenticate(String username, String password) {
