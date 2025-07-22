@@ -8,8 +8,9 @@ public class AuthService {
 
     static {
         // Preloaded users (in production, use database)
-        userDatabase.put("alice", "pass123");
-        userDatabase.put("bob", "pass456");
+        userDatabase.put("Yahya", "networkProgramming");
+        userDatabase.put("Ibrahim", "networkProgramming");
+        userDatabase.put("Ammer" , "networkProgramming");
     }
 
     public static boolean authenticate(String username, String password) {
