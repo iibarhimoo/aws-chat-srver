@@ -8,13 +8,13 @@ public class EnhancedChatServer {
     private static final int PORT = 8080;
     private static Map<String, PrintWriter> clients = new HashMap<>();
     private static Map<String, String> userCredentials = Map.of(
-        "Yahay", "networkProgramming",
-        "Ibrahim", "networkProgramming",
-        "Hasan", "networkProgramming",
-        "Faisal", "networkProgramming",
-        "Safwan", "networkProgramming",
-        "Nouruldeen", "networkProgramming",
-        "Saud", "networkProgramming"
+        "Yahya", "12345",
+        "Ibrahim", "12345",
+        "Hasan", "12345",
+        "Faisal", "12345",
+        "Safwan", "12345",
+        "Nouruldeen", "12345",
+        "Saud", "12345"
     );
     private static Map<String, Set<PrintWriter>> rooms = new HashMap<>();
 
