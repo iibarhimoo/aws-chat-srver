@@ -1,4 +1,4 @@
-package com.chat.gui;
+package com.chat;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +19,7 @@ public class EnhancedChatClient extends JFrame {
     }
 
     private void initializeGUI() {
-        setTitle("Enhanced Chat Client");
+        setTitle("Chat Client");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -60,7 +60,7 @@ public class EnhancedChatClient extends JFrame {
         while (!connected && attemptsLeft > 0) {
             String serverIp = JOptionPane.showInputDialog(this, 
                 "Enter server IP (attempts left: " + attemptsLeft + "):", 
-                "localhost");
+                "Server IP");
 
             if (serverIp == null) {
                 System.exit(0);
