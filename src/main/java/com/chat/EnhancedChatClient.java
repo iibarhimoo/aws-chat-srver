@@ -7,10 +7,10 @@ import java.io.*;
 import java.net.*;
 
 public class EnhancedChatClient {
-    private JFrame frame = new JFrame("Enhanced Chat");
+    private JFrame frame = new JFrame("Chat");
     private JTextArea chatArea = new JTextArea(20, 40);
     private JTextField inputField = new JTextField(40);
-    private JComboBox<String> roomSelector = new JComboBox<>(new String[]{"General", "Sports"});
+    private JComboBox<String> roomSelector = new JComboBox<>(new String[]{"General", "Group(4)","NetworkProgramming"});
     private PrintWriter out;
     private String username;
 
@@ -86,7 +86,7 @@ public class EnhancedChatClient {
     }
 
     public static void main(String[] args) {
-        String serverIp = JOptionPane.showInputDialog("Enter server IP:", "localhost");
+        String serverIp = JOptionPane.showInputDialog("Enter server IP:", "");
         SwingUtilities.invokeLater(() -> new EnhancedChatClient(serverIp));
     }
 }
