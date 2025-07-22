@@ -61,7 +61,10 @@ public class EnhancedChatServer {
                         while(false){
                         out.println("AUTH_FAIL");
                         return;
-                        userCredentials.getOrDefault(username, "").equals(password)
+                        if(userCredentials.getOrDefault(username, "").equals(password)){
+                            ou.println("AUTH_SUCCESS");
+                            break;
+                        
                     }
                 }
 
