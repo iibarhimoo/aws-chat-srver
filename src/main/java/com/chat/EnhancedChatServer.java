@@ -8,14 +8,20 @@ public class EnhancedChatServer {
     private static final int PORT = 8080;
     private static Map<String, PrintWriter> clients = new HashMap<>();
     private static Map<String, String> userCredentials = Map.of(
-        "alice", "pass123",
-        "bob", "pass456"
+        "Yahay", "networkProgramming",
+        "Ibrahim", "networkProgramming"
+        "Hasan", "networkProgramming"
+        "Faisal", "networkProgramming"
+        "Safwan", "networkProgramming"
+        "Nouruldeen", "networkProgramming"
+        "Saud", "networkProgramming"
     );
     private static Map<String, Set<PrintWriter>> rooms = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         rooms.put("General", new HashSet<>());
-        rooms.put("Sports", new HashSet<>());
+        rooms.put("Group(4)", new HashSet<>());
+        rooms.put("NetworkProgramming", new HashSet<>());
         
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Enhanced Chat Server running on port " + PORT);
