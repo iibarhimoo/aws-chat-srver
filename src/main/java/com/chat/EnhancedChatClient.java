@@ -23,7 +23,7 @@ public class EnhancedChatClient extends JFrame {
     }
 
     private void initializeGUI() {
-        setTitle("Enhanced Chat Client");
+        setTitle("Chat Client");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -86,7 +86,7 @@ public class EnhancedChatClient extends JFrame {
     }
 
     private void connectToServer() {
-        String serverIp = JOptionPane.showInputDialog(this, "Enter server IP:", "localhost");
+        String serverIp = JOptionPane.showInputDialog(this, "Enter server IP:", "Server IP");
         if (serverIp == null) {
             System.exit(0);
         }
