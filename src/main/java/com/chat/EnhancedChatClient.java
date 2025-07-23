@@ -1,4 +1,4 @@
-package com.chat.gui;
+package com.chat;
 
 import javax.swing.*;
 import java.awt.*;
